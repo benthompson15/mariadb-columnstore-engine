@@ -3827,9 +3827,6 @@ int ProcessManager::disableModule(string target, bool manualFlag)
     }
 	processManager.recycleProcess(target);
 
-	//check for SIMPLEX Processes on mate might need to be started
-	processManager.checkSimplexModule(target);
-
     //distribute config file
     distributeConfigFile("system");
 
