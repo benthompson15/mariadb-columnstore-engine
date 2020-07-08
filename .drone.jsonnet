@@ -148,7 +148,7 @@ local Pipeline(branch, platform, event) = {
                'rm -rf storage/columnstore/columnstore',
                'cp -r /drone/src /mdb/' + builddir + '/storage/columnstore/columnstore',
                // temporary try to get rpm packages
-               'cp /drone/src/server-cmakefile/CMakeLists.txt /mdb/' + builddir + '/storage/columnstore/',
+               // 'cp /drone/src/server-cmakefile/CMakeLists.txt /mdb/' + builddir + '/storage/columnstore/',
              ],
            },
            {
