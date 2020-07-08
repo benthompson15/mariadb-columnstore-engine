@@ -5,12 +5,13 @@ local platforms = {
 
 local codebase_map = {
   //develop: 'git clone --recurse-submodules --branch 10.5 --depth 1 https://github.com/MariaDB/server .',
-  develop: 'git clone --recurse-submodules --branch 10.5-enterprise --depth 1 https://github.com/mariadb-corporation/MariaDBEnterprise .',
+  // develop: 'git clone --recurse-submodules --branch 10.5-enterprise --depth 1 https://github.com/mariadb-corporation/MariaDBEnterprise .',
+  develop: 'git clone --recurse-submodules --branch 10.5-ent-mcs --depth 1 https://github.com/mariadb-corporation/MariaDBEnterprise .',
   'develop-1.4': 'git clone --recurse-submodules --branch 10.4-enterprise --depth 1 https://github.com/mariadb-corporation/MariaDBEnterprise .',
 };
 
 local builddir = 'verylongdirnameforverystrangecpackbehavior';
-local cmakeflags = '-DCMAKE_BUILD_TYPE=RelWithDebInfo -DPLUGIN_COLUMNSTORE=YES -DPLUGIN_MROONGA=NO -DPLUGIN_ROCKSDB=NO -DPLUGIN_TOKUDB=NO -DPLUGIN_CONNECT=NO -DPLUGIN_SPIDER=NO -DPLUGIN_OQGRAPH=NO -DPLUGIN_PERFSCHEMA=NO -DPLUGIN_SPHINX=NO -DWITH_MARIABACKUP=OFF';
+local cmakeflags = '-DCMAKE_BUILD_TYPE=RelWithDebInfo -DPLUGIN_COLUMNSTORE=YES -DPLUGIN_XPAND=NO -DPLUGIN_MROONGA=NO -DPLUGIN_ROCKSDB=NO -DPLUGIN_TOKUDB=NO -DPLUGIN_CONNECT=NO -DPLUGIN_SPIDER=NO -DPLUGIN_OQGRAPH=NO -DPLUGIN_PERFSCHEMA=NO -DPLUGIN_SPHINX=NO -DWITH_MARIABACKUP=OFF';
 
 local rpm_build_deps = 'install -y systemd-devel git make gcc gcc-c++ libaio-devel openssl-devel boost-devel bison snappy-devel flex libcurl-devel libxml2-devel ncurses-devel automake libtool policycoreutils-devel rpm-build lsof iproute pam-devel perl-DBI cracklib-devel expect readline-devel';
 
@@ -58,11 +59,21 @@ local Pipeline(branch, platform, event) = {
     volumes: [pipeline._volumes.docker],
     commands: [
       'docker run -e DEBIAN_FRONTEND=noninteractive -e MCS_USE_S3_STORAGE=0 --name smoke --privileged --detach --volume /sys/fs/cgroup:/sys/fs/cgroup:ro ' + img + ' ' + init + ' --unit=basic.target',
+      'mkidr /drone/src/result/cs',
+      'mv /drone/src/result/*olumnstore* /drone/src/result/cs/',
       'docker cp /drone/src/result smoke:/',
+      'mv /drone/src/result/cs/*olumnstore* /drone/src/result/',
+      'rm -r /drone/src/result/cs',
       if (std.split(platform, ':')[0] == 'centos') then 'docker exec -t smoke bash -c "yum install -y git which rsyslog hostname && yum install -y /result/*.' + pkg_format + '"' else '',
       if (std.split(platform, ':')[0] == 'debian' || std.split(platform, ':')[0] == 'ubuntu') then 'docker exec -t smoke bash -c "apt update && apt install -y git rsyslog hostname && apt install -y -f /result/*.' + pkg_format + '"' else '',
       if (std.split(platform, '/')[0] == 'opensuse') then 'docker exec -t smoke bash -c "zypper install -y git which hostname rsyslog && zypper install -y --allow-unsigned-rpm /result/*.' + pkg_format + '"' else '',
-      // "docker exec -t smoke sed -i '/\\[mariadb\\]/a plugin_maturity=stable' /etc/" + (if pkg_format == 'deb' then 'mysql/mariadb.conf.d/50-' else 'my.cnf.d/') + 'server.cnf',
+
+      "docker exec -t smoke sed -i '/\\[mariadb\\]/a plugin_maturity=gamma' /etc/" + (if pkg_format == 'deb' then 'mysql/mariadb.conf.d/50-' else 'my.cnf.d/') + 'server.cnf',
+
+      if (std.split(platform, ':')[0] == 'centos') then 'docker exec -t smoke bash -c "yum install -y /result/cs/*.' + pkg_format + '"' else '',
+      if (std.split(platform, ':')[0] == 'debian' || std.split(platform, ':')[0] == 'ubuntu') then 'docker exec -t smoke bash -c "apt install -y -f /result/cs/*.' + pkg_format + '"' else '',
+      if (std.split(platform, '/')[0] == 'opensuse') then 'docker exec -t smoke bash -c "zypper install -y --allow-unsigned-rpm /result/cs/*.' + pkg_format + '"' else '',
+
       'docker exec -t smoke systemctl start mariadb',
       'docker exec -t smoke systemctl start mariadb-columnstore',
       'docker exec -t smoke mysql -e "create database if not exists test; create table test.t1 (a int) engine=Columnstore; insert into test.t1 values (1); select * from test.t1"',
@@ -75,7 +86,7 @@ local Pipeline(branch, platform, event) = {
   regression:: {
     name: 'regression',
     image: 'docker:git',
-    // failure: 'ignore',
+    failure: 'ignore',
     volumes: [pipeline._volumes.docker, pipeline._volumes.mdb],
     commands: [
       'docker run -e DEBIAN_FRONTEND=noninteractive -e MCS_USE_S3_STORAGE=0 --name regression --privileged --detach --volume /sys/fs/cgroup:/sys/fs/cgroup:ro ' + img + ' ' + init + ' --unit=basic.target',
