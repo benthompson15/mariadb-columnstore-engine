@@ -68,7 +68,7 @@ local Pipeline(branch, platform, event) = {
       if (std.split(platform, ':')[0] == 'debian' || std.split(platform, ':')[0] == 'ubuntu') then 'docker exec -t smoke bash -c "apt update && apt install -y git rsyslog hostname && apt install -y -f /result/*.' + pkg_format + '"' else '',
       if (std.split(platform, '/')[0] == 'opensuse') then 'docker exec -t smoke bash -c "zypper install -y git which hostname rsyslog && zypper install -y --allow-unsigned-rpm /result/*.' + pkg_format + '"' else '',
 
-      "docker exec -t smoke sed -i '/\\[mariadb\\]/a plugin_maturity=gamma' /etc/" + (if pkg_format == 'deb' then 'mysql/mariadb.conf.d/50-' else 'my.cnf.d/') + 'server.cnf',
+      'docker exec -t smoke sed -i "/\\[mariadb\\]/a plugin_maturity=gamma" /etc/' + (if pkg_format == 'deb' then 'mysql/mariadb.conf.d/50-' else 'my.cnf.d/') + 'server.cnf',
 
       if (std.split(platform, ':')[0] == 'centos') then 'docker exec -t smoke bash -c "yum install -y /result/cs/*.' + pkg_format + '"' else '',
       if (std.split(platform, ':')[0] == 'debian' || std.split(platform, ':')[0] == 'ubuntu') then 'docker exec -t smoke bash -c "apt install -y -f /result/cs/*.' + pkg_format + '"' else '',
@@ -178,8 +178,9 @@ local Pipeline(branch, platform, event) = {
                "sed -i -e '/Package: mariadb-backup/,/^$/d' debian/control",
                "sed -i -e '/Package: mariadb-plugin-connect/,/^$/d' debian/control",
                "sed -i -e '/Package: mariadb-plugin-cracklib-password-check/,/^$/d' debian/control",
-               "sed -i -e '/Package: mariadb-plugin-gssapi-*/,/^$/d' debian/control",
-               "sed -i -e '/wsrep/d' debian/mariadb-server-*.install",
+               "sed -i -e '/Package: mariadb-plugin-gssapi*/,/^$/d' debian/control",
+               "sed -i -e '/Package: mariadb-plugin-xpand*/,/^$/d' debian/control",
+               "sed -i -e '/wsrep/d' debian/mariadb-server*.install",
                "sed -i -e 's/Depends: galera.*/Depends:/' debian/control",
                "sed -i -e 's/\"galera-enterprise-4\"//' cmake/cpack_rpm.cmake",
                "sed -i '/columnstore/Id' debian/autobake-deb.sh",
