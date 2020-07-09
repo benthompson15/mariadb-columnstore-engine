@@ -70,9 +70,9 @@ local Pipeline(branch, platform, event) = {
 
       //'docker exec -t smoke sed -i "/\\[mariadb\\]/a plugin_maturity=gamma" /etc/' + (if pkg_format == 'deb' then 'mysql/mariadb.conf.d/50-' else 'my.cnf.d/') + 'server.cnf',
 
-      if (std.split(platform, ':')[0] == 'centos') then 'docker exec -t smoke bash -c "yum install -y /result/cs/*.' + pkg_format + '"' else '',
-      if (std.split(platform, ':')[0] == 'debian' || std.split(platform, ':')[0] == 'ubuntu') then 'docker exec -t smoke bash -c "apt install -y -f /result/cs/*.' + pkg_format + '"' else '',
-      if (std.split(platform, '/')[0] == 'opensuse') then 'docker exec -t smoke bash -c "zypper install -y --allow-unsigned-rpm /result/cs/*.' + pkg_format + '"' else '',
+      // if (std.split(platform, ':')[0] == 'centos') then 'docker exec -t smoke bash -c "yum install -y /result/cs/*.' + pkg_format + '"' else '',
+      // if (std.split(platform, ':')[0] == 'debian' || std.split(platform, ':')[0] == 'ubuntu') then 'docker exec -t smoke bash -c "apt install -y -f /result/cs/*.' + pkg_format + '"' else '',
+      // if (std.split(platform, '/')[0] == 'opensuse') then 'docker exec -t smoke bash -c "zypper install -y --allow-unsigned-rpm /result/cs/*.' + pkg_format + '"' else '',
 
       'docker exec -t smoke systemctl start mariadb',
       'docker exec -t smoke systemctl start mariadb-columnstore',
